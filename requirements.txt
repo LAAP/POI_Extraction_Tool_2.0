@@ -3,3 +3,10 @@ geopy
 requests
 streamlit
 numpy
+pyproj
+shapely
+httpx
+PyYAML
+loguru
+rich
+pytest
