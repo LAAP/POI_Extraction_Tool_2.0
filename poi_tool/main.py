@@ -1,6 +1,11 @@
 import argparse
-import pandas as pd
+import os
 from src.extractor import geocode_address, get_pois, get_pois_with_detailed_categories, create_grid_analysis, create_grid_analysis_vertical
+from src.geometry import bbox_wgs84_for_square_m
+from src.tags import load_tag_filters, tagset_hash
+from src.overpass_client import OverpassClient
+from src.normalize import normalize_elements
+from src.io_utils import write_outputs
 
 def main():
     parser = argparse.ArgumentParser(description="Extract POIs from OpenStreetMap.")
@@ -14,6 +19,12 @@ def main():
                        help="Search radius in km for grid analysis (default: 5.0)")
     parser.add_argument("--grid-size", type=float, default=0.5, 
                        help="Grid cell size in km (default: 0.5)")
+    # New deterministic pipeline flags
+    parser.add_argument("--poiextract", action='store_true', help="Run deterministic 1x1 km extraction with tags.yml")
+    parser.add_argument("--tags", type=str, default="config/tags.yml", help="Path to tags.yml")
+    parser.add_argument("--overpass-url", type=str, default="https://overpass-api.de/api/interpreter", help="Overpass endpoint")
+    parser.add_argument("--snapshot", type=str, default=None, help="YYYY-MM-DD to pin OSM date")
+    parser.add_argument("--outdir", type=str, default="out", help="Output directory for deterministic pipeline")
     
     args = parser.parse_args()
     
@@ -34,6 +45,30 @@ def main():
         return
 
     print(f"Searching for POIs around ({lat}, {lon})...")
+
+    # Deterministic extractor path
+    if args.poiextract:
+        south, west, north, east, utm_zone = bbox_wgs84_for_square_m(lat, lon, side_m=1000)
+        filters = load_tag_filters(args.tags)
+        tag_hash = tagset_hash(filters)
+        client = OverpassClient(base_url=args.overpass_url)
+        query = client.build_query((south, west, north, east), filters, snapshot_iso=(args.snapshot + 'T00:00:00Z') if args.snapshot else None)
+        data = client.fetch(query)
+        elements = data.get('elements', [])
+        rows = normalize_elements(elements)
+        meta = {
+            'input_address': args.address or '',
+            'center_lat': lat,
+            'center_lon': lon,
+            'utm_zone': utm_zone,
+            'bbox_wgs84': [south, west, north, east],
+            'tagset_hash': tag_hash,
+            'overpass_url': args.overpass_url,
+            'osm_base_ts': data.get('osm3s', {}).get('timestamp_osm_base'),
+        }
+        csv_path, json_path = write_outputs(rows, args.outdir, meta)
+        print(f"Wrote {len(rows)} rows to {csv_path} and {json_path}")
+        return
     
     if args.analysis == "individual":
         pois_df = get_pois_with_detailed_categories(lat, lon)

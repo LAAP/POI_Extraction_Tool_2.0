@@ -1,0 +1,20 @@
+tags:
+  # Amenity (general) plus specific subtypes we care about
+  - { key: amenity }
+  - { key: amenity, values: [cafe, bar, library, community_centre, social_facility, school] }
+
+  # Leisure, parks and recreational areas
+  - { key: leisure }
+  - { key: leisure, values: [park, recreation_ground, playground, garden] }
+
+  # Historic
+  - { key: historic }
+
+  # Shops
+  - { key: shop }
+
+  # Public transit lines and stops
+  - { key: public_transport }
+  - { key: route, values: [subway, bus, tram, light_rail] }
+  - { key: highway, values: [bus_stop] }
+

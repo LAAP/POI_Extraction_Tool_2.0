@@ -1,0 +1,14 @@
+{
+  "run": 1,
+  "bbox": [
+    40.75255778,
+    -73.991963,
+    40.7614609,
+    -73.979981
+  ],
+  "utm_zone": 32618,
+  "overpass_url": "https://overpass-api.de/api/interpreter",
+  "osm_base_ts": "2025-09-22T16:18:13Z",
+  "elements_count": 1473,
+  "id_hash": "90e02e3403c9cd100a70f7717aa101cd986a3cae1871303c7e3227dee5be9ddb"
+}
